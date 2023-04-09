@@ -1,12 +1,8 @@
-# message( FATAL_ERROR "some error")
-cmake_minimum_required(VERSION 3.10)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+cmake_minimum_required(VERSION 3.1)
+project(OGDF-PROJECT CXX)
 
-if(MSVC)
-    set(CMAKE_GENERATOR_TOOLSET "ClangCL")
-endif(MSVC)
+set(module_dir "${PROJECT_SOURCE_DIR}/cmake")
+list(INSERT CMAKE_MODULE_PATH 0 "${module_dir}" )
 
 if(DEFINED ENV{ARCHFLAGS})
   # Parse the cibuildwheel ARCHFLAGS env variable as something we can understand on
@@ -18,66 +14,50 @@ if(DEFINED ENV{ARCHFLAGS})
   set(CMAKE_OSX_ARCHITECTURES "${NEW_ARCHFLAGS}")
 endif(DEFINED ENV{ARCHFLAGS})
 
-project(_tmap)
-
-# Put LIBOGDF on the include- and lib-path
-include_directories($ENV{LIBOGDF_INSTALL_PATH}/include)
-link_directories($ENV{LIBOGDF_INSTALL_PATH}/lib)
-
-if(MSVC)
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /O2")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2")
-    # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /permissive /std:c++17")
-    # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /permissive /std:c++17 /wd4068 /wd4305 /wd4267 /wd4244")
+# build type configuration
+set(BUILD_TYPES Debug Release)
+if(CMAKE_CONFIGURATION_TYPES)
+  set(MULTICONFIG_BUILD 1)
+  set(CMAKE_CONFIGURATION_TYPES ${BUILD_TYPES} CACHE STRING "" FORCE)
 else()
-  # Set O2 optimisations, the more stable option
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O2")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
-
-  if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-    set(OpenMP_C "${CMAKE_C_COMPILER}")
-    # set(OpenMP_C_FLAGS "-fopenmp=libomp -Wno-unused-command-line-argument")
-    set(OpenMP_C_FLAGS "-Wno-unused-command-line-argument")
-    set(OpenMP_C_LIB_NAMES "libomp" "libgomp" "libiomp5")
-    set(OpenMP_libomp_LIBRARY ${OpenMP_C_LIB_NAMES})
-    set(OpenMP_libgomp_LIBRARY ${OpenMP_C_LIB_NAMES})
-    set(OpenMP_libiomp5_LIBRARY ${OpenMP_C_LIB_NAMES})
+  set(MULTICONFIG_BUILD 0)
+  if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Type of build to be created." FORCE)
   endif()
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${BUILD_TYPES})
+endif()
+set(CMAKE_CXX_STANDARD 11)
 
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(OpenMP_CXX "${CMAKE_CXX_COMPILER}")
-    #set(OpenMP_CXX_FLAGS "-fopenmp=libomp -Wno-unused-command-line-argument")
-    set(OpenMP_CXX_FLAGS "-Wno-unused-command-line-argument")
-    set(OpenMP_CXX_LIB_NAMES "libomp" "libgomp" "libiomp5")
-    set(OpenMP_libomp_LIBRARY ${OpenMP_CXX_LIB_NAMES})
-    set(OpenMP_libgomp_LIBRARY ${OpenMP_CXX_LIB_NAMES})
-    set(OpenMP_libiomp5_LIBRARY ${OpenMP_CXX_LIB_NAMES})
-  else()
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fopenmp")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fopenmp")
+include(compiler-specifics)
+include(group-files)
+include(coin)
+include(ogdf)
+
+include(make-user-target)
+include(tests)
+include(examples)
+
+include(doc)
+
+add_custom_target(build-all DEPENDS OGDF tests examples)
+
+# create autogen header
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/ogdf/basic/internal")
+configure_file("${module_dir}/config_autogen.h.in" "${PROJECT_BINARY_DIR}/include/ogdf/basic/internal/config_autogen.h")
+
+# target documentation
+message(STATUS "The default target builds OGDF (and dependencies like COIN).")
+if(DOXYGEN_FOUND AND DOC_INSTALL)
+  message(STATUS "Because DOC_INSTALL is set, it also generates the OGDF documentation (in-source).")
+endif()
+message(STATUS "")
+message(STATUS "Other important targets:")
+if(DOXYGEN_FOUND)
+  if (DOC_INSTALL)
+    message(STATUS "        OGDF: build OGDF library only")
   endif()
-endif(MSVC)
-
-find_package(OpenMP REQUIRED)
-
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-
-find_package(Threads REQUIRED)
-
-SET(SOURCE_DIR "src/_tmap")
-# Tell cmake that headers are in alse in source_dir
-include_directories(${SOURCE_DIR})
-SET(SOURCES "${SOURCE_DIR}/layout.cc" "${SOURCE_DIR}/lshforest.cc" "${SOURCE_DIR}/minhash.cc" "${SOURCE_DIR}/analyse.cc")
-
-# Generate python module
-add_subdirectory(pybind11)
-
-pybind11_add_module(_tmap ${SOURCES} "${SOURCE_DIR}/bindings.cc")
-if(MSVC)
-target_link_libraries(_tmap PRIVATE OGDF.lib COIN.lib)
-else()
-target_link_libraries(_tmap PRIVATE OGDF COIN)
-endif(MSVC)
-
-target_link_libraries(_tmap PRIVATE Threads::Threads)
-target_link_libraries(_tmap PRIVATE ${OpenMP_CXX_FLAGS})
+  message(STATUS "         doc: build doxygen documentation (in-source)")
+endif()
+message(STATUS "       tests: build tests")
+message(STATUS "    examples: build examples")
+message(STATUS "   build-all: build OGDF, tests, examples")
