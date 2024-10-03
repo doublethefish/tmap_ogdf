@@ -29,6 +29,40 @@ jobs:
     - name: Checkout source code
       uses: actions/checkout@v4
 
+    - name: Cache CMake build directory
+      uses: actions/cache@v4
+      with:
+        path: build
+        key: ${{ runner.os }}-cmake-${{ matrix.architecture }}-${{ matrix.build_type }}-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-${{ matrix.architecture }}-${{ matrix.build_type }}
+          ${{ runner.os }}-cmake-${{ matrix.architecture }}
+          ${{ runner.os }}-cmake
+
+    - name: Cache dependencies (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/cache@v4
+      with:
+        path: /var/cache/apt
+        key: apt-cache-${{ runner.os }}-${{ matrix.architecture }}
+        restore-keys: apt-cache-${{ runner.os }}-${{ matrix.architecture }}
+
+    - name: Cache dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      uses: actions/cache@v4
+      with:
+        path: /Users/${{ github.actor }}/Library/Caches/Homebrew
+        key: brew-cache-${{ runner.os }}-${{ matrix.architecture }}
+        restore-keys: brew-cache-${{ runner.os }}-${{ matrix.architecture }}
+
+    - name: Cache dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: actions/cache@v4
+      with:
+        path: C:\Users\runneradmin\AppData\Local\Temp\chocolatey
+        key: choco-cache-${{ runner.os }}-${{ matrix.architecture }}
+        restore-keys: choco-cache-${{ runner.os }}-${{ matrix.architecture }}
+
     - name: Set up CMake
       uses: lukka/get-cmake@v3.30.4
 
@@ -45,7 +79,7 @@ jobs:
       run: choco install -y visualstudio2022buildtools visualstudio2022-workload-vctools
 
     - name: Create build directory
-      run: mkdir build
+      run: mkdir -p build
       working-directory: ${{ github.workspace }}
 
     - name: Configure CMake
