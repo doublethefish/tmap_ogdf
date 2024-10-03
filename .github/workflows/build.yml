@@ -78,14 +78,16 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: choco install -y visualstudio2022buildtools visualstudio2022-workload-vctools
 
-    - name: Create build directory
-      run: |
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          mkdir build -Force
-        else
-          mkdir -p build
-        fi
+    - name: Create build directory (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: mkdir -p build
       shell: bash
+
+    - name: Create build directory (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        if (-not (Test-Path -Path build)) { New-Item -Path build -ItemType Directory }
+      shell: pwsh
 
     - name: Set up environment for LLVM (macOS Intel/ARM64)
       if: matrix.os == 'macos-latest'
