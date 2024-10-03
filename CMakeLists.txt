@@ -49,6 +49,13 @@ else()
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${BUILD_TYPES})
 endif()
 
+# Check if the platform is macOS, and try and optimise the github build.
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  # Use lld linker for faster builds on macOS
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=lld")
+endif()
+
 # C++ standard and position-independent code (for dynamic libraries)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)  # Ensure PIC for shared libs
