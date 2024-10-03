@@ -79,8 +79,13 @@ jobs:
       run: choco install -y visualstudio2022buildtools visualstudio2022-workload-vctools
 
     - name: Create build directory
-      run: mkdir -p build
-      working-directory: ${{ github.workspace }}
+      run: |
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          mkdir build -Force
+        else
+          mkdir -p build
+        fi
+      shell: bash
 
     - name: Set up environment for LLVM (macOS Intel/ARM64)
       if: matrix.os == 'macos-latest'
