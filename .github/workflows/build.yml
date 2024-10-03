@@ -19,7 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]  # Target OSes
         architecture: [x64, arm64]  # Add support for both x64 and arm64 architectures
-        build_type: [Debug, Release]  # Build types for matrix
+        build_type: [Release]  # Build types for matrix
         exclude:
           - os: windows-latest  # Windows doesn't have arm64 support yet in GitHub Actions
             architecture: arm64  # Exclude ARM64 for Windows, only build AMD64
