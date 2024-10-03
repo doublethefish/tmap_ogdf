@@ -54,6 +54,10 @@ else()
   set(COIN_SOLVER_IS_EXTERNAL 1)
 endif()
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+  add_compile_options(-Wno-deprecated-declarations)
+endif()
+
 # installation
 set(COIN_INSTALL_LIBRARY_DIR "lib/${CMAKE_LIBRARY_ARCHITECTURE}" CACHE PATH "Installation path of COIN library")
 set(COIN_INSTALL_BIN_DIR "bin" CACHE PATH "Installation path of COIN runtime targets")
