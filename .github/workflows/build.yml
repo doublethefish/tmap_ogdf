@@ -17,9 +17,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]  # Define your target platforms
+        os: [ubuntu-latest, macos-latest, windows-latest]  # Target OSes
+        architecture: [x64, arm64]  # Add support for both x64 and arm64 architectures
         build_type: [Debug, Release]  # Build types for matrix
-    
+        exclude:
+          - os: windows-latest  # Windows doesn't have arm64 support yet in GitHub Actions
+            architecture: arm64  # Exclude ARM64 for Windows, only build AMD64
+
+
     steps:
     - name: Checkout source code
       uses: actions/checkout@v2
@@ -27,15 +32,15 @@ jobs:
     - name: Set up CMake
       uses: lukka/get-cmake@v3.30.3
 
-    - name: Install dependencies (Linux)
+    - name: Install dependencies (Linux x64/arm64)
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install -y build-essential libx11-dev
 
-    - name: Install dependencies (macOS)
+    - name: Install dependencies (macOS x64/arm64)
       if: matrix.os == 'macos-latest'
       run: brew install cmake libx11
 
-    - name: Install dependencies (Windows)
+    - name: Install dependencies (Windows x64)
       if: matrix.os == 'windows-latest'
       run: choco install -y visualstudio2022buildtools visualstudio2022-workload-vctools
 
@@ -58,7 +63,7 @@ jobs:
     - name: Package Artefacts
       uses: actions/upload-artifact@v3
       with:
-        name: ogdf-libs-${{ matrix.os }}-${{ matrix.build_type }}-v${{ steps.get_version.outputs.version }}-${{ github.sha }}
+        name: ogdf-libs-${{ matrix.os }}-${{ matrix.architecture }}-${{ matrix.build_type }}-v${{ steps.get_version.outputs.version }}-${{ github.sha }}
         path: |
           build/lib/*.so
           build/lib/*.dylib
