@@ -62,14 +62,22 @@ jobs:
       run: cmake --build build --config ${{ matrix.build_type }} -- /m
       working-directory: ${{ github.workspace }}
 
-    - name: Determine version number
-      id: get_version
-      run: echo "::set-output name=version::$(grep -Po '(?<=VERSION )([0-9]+\.[0-9]+\.[0-9]+)' CMakeLists.txt)"
+    # Use PowerShell for Windows and sed for Linux/macOS to extract the version
+    - name: Determine version number (Linux/macOS)
+      if: matrix.os != 'windows-latest'
+      run: echo "version=$(sed -n 's/^project.*VERSION \([0-9.]*\).*$/\1/p' CMakeLists.txt)" >> $GITHUB_ENV
+
+    - name: Determine version number (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        $version = (Select-String -Path "CMakeLists.txt" -Pattern 'VERSION ([0-9]+\.[0-9]+\.[0-9]+)').Matches.Groups[1].Value
+        echo "version=$version" >> $env:GITHUB_ENV
 
     - name: Package Artefacts
       uses: actions/upload-artifact@v3
       with:
-        name: ogdf-libs-${{ matrix.os }}-${{ matrix.architecture }}-${{ matrix.build_type }}-v${{ steps.get_version.outputs.version }}-${{ github.sha }}
+        name: ogdf-libs-${{ matrix.os }}-${{ matrix.architecture }}-${{ matrix.build_type }}-v${{ env.version }}-${{ github.sha }}
         path: |
           build/lib/*.so
           build/lib/*.dylib
