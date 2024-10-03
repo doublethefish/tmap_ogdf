@@ -1,0 +1,59 @@
+name: Build and Package OGDF-Tmap Libraries
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build OGDF-Tmap Project
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]  # Define your target platforms
+        build_type: [Debug, Release]  # Build types for matrix
+    
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v2
+
+    - name: Set up CMake
+      uses: lukka/get-cmake@v3
+
+    - name: Install dependencies (Linux & macOS)
+      if: matrix.os != 'windows-latest'
+      run: sudo apt-get install -y build-essential libx11-dev
+
+    - name: Install dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: choco install -y visualstudio2022buildtools visualstudio2022-workload-vctools
+
+    - name: Create build directory
+      run: mkdir build
+      working-directory: ${{ github.workspace }}
+
+    - name: Configure CMake
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SHARED_LIBS=ON
+      working-directory: ${{ github.workspace }}
+
+    - name: Build
+      run: cmake --build build --config ${{ matrix.build_type }} -- -j$(nproc)
+      working-directory: ${{ github.workspace }}
+
+    - name: Determine version number
+      id: get_version
+      run: echo "::set-output name=version::$(grep -Po '(?<=VERSION )([0-9]+\.[0-9]+\.[0-9]+)' CMakeLists.txt)"
+
+    - name: Package Artefacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ogdf-libs-${{ matrix.os }}-${{ matrix.build_type }}-v${{ steps.get_version.outputs.version }}-${{ github.sha }}
+        path: |
+          build/lib/*.so
+          build/lib/*.dylib
+          build/lib/*.dll
+          build/lib/*.a
