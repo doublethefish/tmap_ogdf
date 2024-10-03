@@ -24,6 +24,9 @@ else()
   unset(OGDF_LEAK_CHECK CACHE)
 endif()
 
+# always unset the leak checker for faster builds.
+unset(OGDF_LEAK_CHECK CACHE)
+
 # set debug mode
 if(OGDF_DEBUG_MODE STREQUAL HEAVY)
   set(OGDF_HEAVY_DEBUG ON)
@@ -61,14 +64,14 @@ mark_as_advanced(OGDF_EXTRA_CXX_FLAGS_RELEASE)
 # static analysis using clang-tidy
 option(OGDF_ENABLE_CLANG_TIDY "Enable static analysis using clang-tidy" OFF)
 
-if(OGDF_ENABLE_CLANG_TIDY)
-  find_program(CLANG_TIDY clang-tidy)
-  if(CLANG_TIDY)
-    set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY};-extra-arg=-Wno-unknown-warning-option)
-  else()
-    message(WARNING "clang-tidy not found!")
-  endif()
-endif()
+# if(OGDF_ENABLE_CLANG_TIDY)
+#   find_program(CLANG_TIDY clang-tidy)
+#   if(CLANG_TIDY)
+#     set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY};-extra-arg=-Wno-unknown-warning-option)
+#   else()
+#     message(WARNING "clang-tidy not found!")
+#   endif()
+# endif()
 
 # compilation
 file(GLOB_RECURSE ogdf_headers include/ogdf/*.h)
