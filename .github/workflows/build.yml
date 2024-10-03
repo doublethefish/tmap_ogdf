@@ -1,6 +1,9 @@
 name: Build and Package OGDF-Tmap Libraries
 
 on:
+  workflow_dispatch:
+    # workflow_dispatch allows manual triggering of the workflow, as long as the
+    # workflow is on the default branch.
   push:
     branches:
       - main
