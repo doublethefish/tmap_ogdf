@@ -36,6 +36,10 @@ if(DEFINED ENV{ARCHFLAGS})
   set(CMAKE_OSX_ARCHITECTURES "${NEW_ARCHFLAGS}")
 endif(DEFINED ENV{ARCHFLAGS})
 
+# Set no debug symbols for Release builds
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -g0")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g0")
+
 # build type configuration
 set(BUILD_TYPES Debug Release)
 if(CMAKE_CONFIGURATION_TYPES)
