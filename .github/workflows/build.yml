@@ -65,7 +65,13 @@ jobs:
     # Use PowerShell for Windows and sed for Linux/macOS to extract the version
     - name: Determine version number (Linux/macOS)
       if: matrix.os != 'windows-latest'
-      run: echo "version=$(sed -n 's/^project.*VERSION \([0-9.]*\).*$/\1/p' CMakeLists.txt)" >> $GITHUB_ENV
+      run: |
+        echo "version=$(sed -n 's/^project.*VERSION \([0-9.]*\).*$/\1/p' CMakeLists.txt)" >> $GITHUB_ENV
+        pwd
+        ls -alh ./
+        ls -alh build/
+        ls -alh build/dist/
+        ls -alh build/dist/lib/
 
     - name: Determine version number (Windows)
       if: matrix.os == 'windows-latest'
@@ -74,12 +80,11 @@ jobs:
         $version = (Select-String -Path "CMakeLists.txt" -Pattern 'VERSION ([0-9]+\.[0-9]+\.[0-9]+)').Matches.Groups[1].Value
         echo "version=$version" >> $env:GITHUB_ENV
 
-    - name: Package Artefacts
-      uses: actions/upload-artifact@v3
+    - name: Package Artifacts
+      uses: actions/upload-artifact@v4
       with:
-        name: ogdf-libs-${{ matrix.os }}-${{ matrix.architecture }}-${{ matrix.build_type }}-v${{ env.version }}-${{ github.sha }}
+        name: ogdf-tmap-libs-${{ matrix.os }}-${{ matrix.architecture }}-${{ matrix.build_type }}-v${{ env.version }}
+        if-no-files-found: error
         path: |
-          build/lib/*.so
-          build/lib/*.dylib
-          build/lib/*.dll
-          build/lib/*.a
+          build/dist/*
+          include/
