@@ -27,9 +27,13 @@ jobs:
     - name: Set up CMake
       uses: lukka/get-cmake@v3.30.3
 
-    - name: Install dependencies (Linux & macOS)
-      if: matrix.os != 'windows-latest'
+    - name: Install dependencies (Linux)
+      if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install -y build-essential libx11-dev
+
+    - name: Install dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: brew install cmake libx11
 
     - name: Install dependencies (Windows)
       if: matrix.os == 'windows-latest'
