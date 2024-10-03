@@ -72,7 +72,7 @@ jobs:
 
     - name: Install dependencies (macOS x64/arm64)
       if: matrix.os == 'macos-latest'
-      run: brew install cmake libx11
+      run: brew install cmake libx11 llvm
 
     - name: Install dependencies (Windows x64)
       if: matrix.os == 'windows-latest'
@@ -81,6 +81,15 @@ jobs:
     - name: Create build directory
       run: mkdir -p build
       working-directory: ${{ github.workspace }}
+
+    - name: Set up environment for LLVM (macOS Intel/ARM64)
+      if: matrix.os == 'macos-latest'
+      run: |
+        if [[ $(uname -m) == 'arm64' ]]; then
+          echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+        else
+          echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
+        fi
 
     - name: Configure CMake
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SHARED_LIBS=ON

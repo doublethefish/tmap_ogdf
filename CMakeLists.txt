@@ -51,6 +51,13 @@ endif()
 
 # Check if the platform is macOS, and try and optimise the github build.
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  # Check if the architecture is arm64 (Apple Silicon) or amd64 (Intel)
+  if (CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+    set(CMAKE_LINKER "/opt/homebrew/opt/llvm/bin/ld.lld")
+  else()
+    set(CMAKE_LINKER "/usr/local/opt/llvm/bin/ld.lld")
+  endif()
+
   # Use lld linker for faster builds on macOS
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=lld")
